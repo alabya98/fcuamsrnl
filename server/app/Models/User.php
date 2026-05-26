@@ -2,47 +2,62 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'tbl_users';
+    protected $primaryKey = 'user_id';
+
     protected $fillable = [
-        'name',
-        'email',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix_name',
+        'gender_id',
+        'birth_date',
+        'age',
+        'username',
+        'role',
         'password',
+        'is_deleted',
+        'profile_picture',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+
+    protected $appends = ['profile_picture_url'];
+
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'   => 'hashed',
+            'is_deleted' => 'boolean',
         ];
+    }
+
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class, 'gender_id', 'gender_id');
+    }
+
+    public function getProfilePictureUrlAttribute(): ?string
+    {
+        if ($this->profile_picture) {
+            $cleanPath = preg_replace('#^public/#', '', $this->profile_picture);
+            return asset('storage/' . $cleanPath);
+        }
+
+        return null;
     }
 }
